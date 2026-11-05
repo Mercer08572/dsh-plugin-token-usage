@@ -1,0 +1,38 @@
+{
+  "name": "dsh-client-ui-token-usage",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Token 用量与成本看板：总量卡片 + 趋势图 + 53 周热力图 + 请求日志，数据存 Host SQLite",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./lib/client.js",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "lib",
+    "locale",
+    "icon.svg",
+    "cordis.patch.yml",
+    "pricing.json",
+    "calendar.seed.json",
+    "README.md"
+  ],
+  "icon": "./icon.svg",
+  "license": "MIT",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-layout"
+      ]
+    }
+  }
+}

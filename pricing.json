@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "usdCnyRate": 6.67,
+  "_note": "每次启动会把这里「数据库还没有」的模型补进去，绝不覆盖你已经在面板里改过的价格。想彻底移除某个模型的价格，要同时删掉文件里的条目，否则下次会被补回。单价单位固定为「每百万 tokens」。以 _ 开头的字段是注释，会被忽略。模型 id 先归一化（转小写 + 去掉 vendor 前缀）再匹配，所以 provider 写 \"*\" 就能覆盖所有通道；google/gemini-3.8-flash 与 gemini-3.8-flash 是同一条，不用写两遍。",
+  "defaults": {
+    "currency": "CNY",
+    "unit": "per_1m",
+    "peakValley": {
+      "enabled": false,
+      "windows": [],
+      "windowsMean": "peak",
+      "discount": 0.5,
+      "weekend": "windows",
+      "holiday": "windows"
+    }
+  },
+  "models": [
+    {
+      "_note": "DeepSeek 主力模型。deepseek-flash / deepseek-v4-flash / deepseek-v4.1-flash / DeepSeek-V4.1-Flash-1017 同价，各列一条；前缀与大小写由归一化处理。",
+      "provider": "*",
+      "model": "deepseek-flash",
+      "currency": "CNY",
+      "prices": { "input": 2, "cacheRead": 0.04, "cacheWrite": 0, "output": 8 },
+      "peakValley": {
+        "enabled": true,
+        "windows": ["09:00-12:00", "14:00-18:00"],
+        "windowsMean": "peak",
+        "discount": 0.5,
+        "weekend": "valley",
+        "holiday": "valley"
+      }
+    },
+    {
+      "provider": "*",
+      "model": "deepseek-v4-flash",
+      "currency": "CNY",
+      "prices": { "input": 2, "cacheRead": 0.04, "cacheWrite": 0, "output": 8 },
+      "peakValley": {
+        "enabled": true,
+        "windows": ["09:00-12:00", "14:00-18:00"],
+        "windowsMean": "peak",
+        "discount": 0.5,
+        "weekend": "valley",
+        "holiday": "valley"
+      }
+    },
+    {
+      "provider": "*",
+      "model": "deepseek-v4.1-flash",
+      "currency": "CNY",
+      "prices": { "input": 2, "cacheRead": 0.04, "cacheWrite": 0, "output": 8 },
+      "peakValley": {
+        "enabled": true,
+        "windows": ["09:00-12:00", "14:00-18:00"],
+        "windowsMean": "peak",
+        "discount": 0.5,
+        "weekend": "valley",
+        "holiday": "valley"
+      }
+    },
+    {
+      "_note": "日志里的 DeepSeek-V4.1-Flash-1017，归一化后是 deepseek-v4.1-flash-1017。",
+      "provider": "*",
+      "model": "deepseek-v4.1-flash-1017",
+      "currency": "CNY",
+      "prices": { "input": 2, "cacheRead": 0.04, "cacheWrite": 0, "output": 8 },
+      "peakValley": {
+        "enabled": true,
+        "windows": ["09:00-12:00", "14:00-18:00"],
+        "windowsMean": "peak",
+        "discount": 0.5,
+        "weekend": "valley",
+        "holiday": "valley"
+      }
+    },
+    {
+      "_note": "与 deepseek-v4.1-flash 同价，唯一区别是缓存读为 5 倍（0.04 × 5 = 0.20）；谷时同样打 5 折 → 0.10。",
+      "provider": "*",
+      "model": "deepseek-v4.1-flash-fast",
+      "currency": "CNY",
+      "prices": { "input": 2, "cacheRead": 0.2, "cacheWrite": 0, "output": 8 },
+      "peakValley": {
+        "enabled": true,
+        "windows": ["09:00-12:00", "14:00-18:00"],
+        "windowsMean": "peak",
+        "discount": 0.5,
+        "weekend": "valley",
+        "holiday": "valley"
+      }
+    },
+    {
+      "_note": "与 deepseek-v4.1-flash 同价。",
+      "provider": "*",
+      "model": "deepseek-v4-flash-vision-exp",
+      "currency": "CNY",
+      "prices": { "input": 2, "cacheRead": 0.04, "cacheWrite": 0, "output": 8 },
+      "peakValley": {
+        "enabled": true,
+        "windows": ["09:00-12:00", "14:00-18:00"],
+        "windowsMean": "peak",
+        "discount": 0.5,
+        "weekend": "valley",
+        "holiday": "valley"
+      }
+    },
+    {
+      "provider": "*",
+      "model": "deepseek-v4-pro",
+      "currency": "CNY",
+      "prices": { "input": 9, "cacheRead": 0.3, "cacheWrite": 0, "output": 27 },
+      "peakValley": {
+        "enabled": true,
+        "windows": ["09:00-12:00", "14:00-18:00"],
+        "windowsMean": "peak",
+        "discount": 0.5,
+        "weekend": "valley",
+        "holiday": "valley"
+      }
+    },
+    {
+      "provider": "*",
+      "model": "gemini-3.8-flash",
+      "currency": "USD",
+      "prices": { "input": 0.75, "cacheRead": 0.075, "cacheWrite": 0, "output": 3.75 }
+    },
+    {
+      "provider": "*",
+      "model": "glm-5.3-flash",
+      "currency": "CNY",
+      "prices": { "input": 0.8, "cacheRead": 0.23, "cacheWrite": 0, "output": 2.8 }
+    },
+    {
+      "provider": "*",
+      "model": "glm-5.3",
+      "currency": "CNY",
+      "prices": { "input": 8, "cacheRead": 2, "cacheWrite": 0, "output": 28 }
+    }
+  ]
+}
