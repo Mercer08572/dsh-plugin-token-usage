@@ -9,6 +9,10 @@
 </p>
 
 <p align="center">
+  <strong>简体中文</strong> · <a href="./README.en.md">English</a>
+</p>
+
+<p align="center">
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/platform-DSH-22c1a4" alt="Platform: DSH">
   <img src="https://img.shields.io/badge/storage-SQLite-12806f" alt="Storage: SQLite">
