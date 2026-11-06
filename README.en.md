@@ -35,7 +35,7 @@ configure and no recording to start — past sessions are backfilled automatical
 | Daily trend | Last 7 / 30 / 90 days as stacked bars (uncached input, cache read, output) with a request-count line on top |
 | Heatmap | 53 weeks, five intensity levels by daily token volume; empty days keep their square so gaps are obvious |
 | Request log | Time, model, input, output, cache read, hit rate, speed, time-to-first-token and cost, with model filter and pagination |
-| Currency switch | Toggle `¥ CNY / $ USD`; it only changes what is displayed |
+| Follows the UI language | ¥ for Chinese, $ for everything else — nothing to configure |
 | Local storage | One SQLite file; delete it and everything is gone |
 
 ## Interface
@@ -54,8 +54,8 @@ The panel is four blocks, top to bottom:
 └───────────────────────────────────┘
 ```
 
-The top right corner holds the currency switch, settings and close. Settings can adjust pricing, exchange
-rate and holidays — advanced knobs you will rarely need.
+The top right corner holds settings and close. Settings can adjust pricing and holidays; the exchange rate
+refreshes daily and needs no configuration. These are advanced knobs you will rarely need.
 
 ## Installation
 

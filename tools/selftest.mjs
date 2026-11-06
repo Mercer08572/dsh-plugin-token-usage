@@ -246,6 +246,13 @@ check(trend.days.some((day) => day.requests >= 3), "趋势里应有请求");
 const heat = await call("heatmap", { weeks: 53 });
 check(heat.days.length >= 2, "热力图应有数据");
 
+// 币种由调用方决定：中文 ¥、英文 $，两者按同一汇率折算。
+const cnyView = await call("overview", { currency: "CNY" });
+const usdView = await call("overview", { currency: "USD" });
+check(usdView.currency === "USD", "传入 USD 时 overview.currency 应为 USD");
+check(cnyView.currency === "CNY", "传入 CNY 时 overview.currency 应为 CNY");
+check(Math.abs(usdView.totals.cost - cnyView.totals.cost / usdView.fx.rate) < 1e-6, `USD 折算不对：${usdView.totals.cost} vs ${cnyView.totals.cost}`);
+
 const settings = await call("settingsGet");
 check(settings.displayCurrency === "CNY", "默认币种应为 CNY");
 

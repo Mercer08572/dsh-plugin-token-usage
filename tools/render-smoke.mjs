@@ -96,8 +96,17 @@ if (typeof exported.apply !== "function") throw new Error("bundle 没有导出 a
 
 // ── 假 ctx：捕获 slot 组件 ────────────────────────────────────────────────
 const slots = new Map();
+let capturedDicts = null;
 const ctx = {
-	locale: { bind: () => (key) => key, register: () => () => {} },
+	locale: {
+		bind: () => (key) => key,
+		register: (_ns, dicts) => {
+			capturedDicts = dicts;
+			return () => {};
+		},
+		getLocale: () => ({ active: "en", revision: 0 }),
+		subscribe: () => () => {}
+	},
 	effect: (fn) => {
 		fn();
 		return () => {};
@@ -121,6 +130,7 @@ if (dock === undefined) throw new Error("没有注册 shell.overlay");
 // ── 极简递归渲染：把函数组件一路展开，遇到 DOM 元素就停 ───────────────────
 const MAX_DEPTH = 40;
 let rendered = 0;
+const texts = [];
 /** 渲染过程中按函数名登记组件，方便后续单独再渲染一次。 */
 const byName = new Map();
 
@@ -131,7 +141,10 @@ function renderNode(node, depth) {
 		for (const child of node) renderNode(child, depth);
 		return;
 	}
-	if (typeof node === "string" || typeof node === "number") return;
+	if (typeof node === "string" || typeof node === "number") {
+		texts.push(String(node));
+		return;
+	}
 	if (typeof node !== "object") return;
 	if (typeof node.type === "function") {
 		rendered += 1;
@@ -148,8 +161,15 @@ function renderNode(node, depth) {
 }
 
 // 面板默认关闭，这里让 useSyncExternalStore 强制返回 open=true，渲染内部结构。
-renderNode(react.createElement(button, { t: (key) => key, wide: true }), 0);
-renderNode(react.createElement(dock, { t: (key) => key }), 0);
+const en = capturedDicts?.en ?? {};
+const trEn = (key, params) => {
+	const template = en[key] ?? key;
+	if (!params) return template;
+	return template.replace(/\{(\w+)\}/g, (match, name) => (name in params ? String(params[name]) : match));
+};
+
+renderNode(react.createElement(button, { t: trEn, wide: true }), 0);
+renderNode(react.createElement(dock, { t: trEn }), 0);
 
 const emptyPass = rendered;
 
@@ -252,7 +272,7 @@ const aliases = [{ alias: "deepseek-v4-flash", canonical: "deepseek-flash" }];
 // UsageDock 的 useState 顺序：overview/trend/heat/logs/models/pricing/groups/aliases/calendar/range/page/filter/error/settingsOpen/revision/loading
 forcedByComponent.set(dock, [overview, trend, heat, logs, models, pricing, groups, aliases, calendar, 30, 1, "", "", true, 0, false]);
 rendered = 0;
-renderNode(react.createElement(dock, { t: (key) => key }), 0);
+renderNode(react.createElement(dock, { t: trEn }), 0);
 
 const dataPass = rendered;
 
@@ -260,14 +280,13 @@ const dataPass = rendered;
 const settings = byName.get("SettingsSheet");
 if (settings === undefined) throw new Error("没有渲染到 SettingsSheet");
 const settingsProps = {
-	tr: (key) => key,
+	tr: trEn,
 	fx: overview.fx,
 	pricing,
 	groups,
 	aliases,
 	calendar,
 	onClose: () => {},
-	onSaveFx: () => {},
 	onRefreshFx: () => {},
 	onRefreshCalendar: () => {},
 	onOverride: () => {},
@@ -278,8 +297,9 @@ const settingsProps = {
 };
 
 let dialogRendered = 0;
-for (const dialog of ["pricing", "aliases"]) {
-	forcedByComponent.set(settings, ["6.67", "", "holiday", dialog, ""]);
+for (const dialog of ["pricing", "aliases", "calendar"]) {
+	// SettingsSheet 的 useState 顺序：dialog / note
+	forcedByComponent.set(settings, [dialog, ""]);
 	rendered = 0;
 	renderNode(react.createElement(settings, settingsProps), 0);
 	dialogRendered += rendered;
@@ -287,6 +307,9 @@ for (const dialog of ["pricing", "aliases"]) {
 
 if (emptyPass < 8) throw new Error("空数据下只渲染了 " + emptyPass + " 个组件，面板内容可能没展开");
 if (dataPass < 12) throw new Error("有数据下只渲染了 " + dataPass + " 个组件，列表/设置可能没渲染");
-if (dialogRendered < 8) throw new Error("设置弹窗只渲染了 " + dialogRendered + " 个组件，价格/别名弹窗可能没打开");
+if (dialogRendered < 12) throw new Error("设置弹窗只渲染了 " + dialogRendered + " 个组件，价格/别名弹窗可能没打开");
 
-console.log("render-smoke ok：空数据 " + emptyPass + " 个组件，有数据 " + dataPass + " 个组件，两个设置弹窗 " + dialogRendered + " 个组件，无异常。");
+const leaked = [...new Set(texts)].filter((text) => /^[a-z][a-zA-Z]*\.[a-zA-Z]/.test(text));
+if (leaked.length > 0) throw new Error("界面上出现了未翻译的 key：" + leaked.join(", "));
+
+console.log("render-smoke ok：空数据 " + emptyPass + " 个组件，有数据 " + dataPass + " 个组件，三个设置弹窗 " + dialogRendered + " 个组件，无异常。");
