@@ -32,7 +32,8 @@ configure and no recording to start — past sessions are backfilled automatical
 | Capability | What you get |
 | --- | --- |
 | Summary cards | Total cost, requests, tokens and cache hit rate, each with today's delta; failures and cancellations live in a hover tooltip |
-| Daily trend | Last 7 / 30 / 90 days as stacked bars (uncached input, cache read, output) with a request-count line on top |
+| Scope switch | Cards can show 7 days, 30 days or all time; the trend has its own 7 / 30 / 90-day switch |
+| Daily trend | Stacked bars (uncached input, cache read, output) with a request-count line on top; 7 / 30 / 90 days |
 | Heatmap | 53 weeks, five intensity levels by daily token volume; empty days keep their square so gaps are obvious |
 | Request log | Time, model, input, output, cache read, hit rate, speed, time-to-first-token and cost, with model filter and pagination |
 | Follows the UI language | ¥ for Chinese, $ for everything else — nothing to configure |
@@ -54,8 +55,8 @@ The panel is four blocks, top to bottom:
 └───────────────────────────────────┘
 ```
 
-The top right corner holds settings and close. Settings can adjust pricing and holidays; the exchange rate
-refreshes daily and needs no configuration. These are advanced knobs you will rarely need.
+Just below the header there is a scope row for the cards (7 days / 30 days / all); the trend has its own
+7 / 30 / 90-day switch. The plugin has no settings to configure.
 
 ## Installation
 
@@ -71,8 +72,8 @@ shows *Backfilling past sessions* and refreshes itself; when it disappears, the 
 ## Data and privacy
 
 - Everything stays on your machine, in `~/.dsh/token-usage/usage.db`.
-- The plugin only reads DSH's own session logs. It makes no outbound requests, apart from one optional
-  exchange-rate lookup at first launch.
+- The plugin only reads DSH's own session logs. It makes no outbound requests, apart from a daily
+  exchange-rate lookup and an occasional holiday-calendar fetch.
 - To reset, delete that directory. To migrate, copy a single file.
 
 ## What the numbers mean
@@ -81,7 +82,8 @@ shows *Backfilling past sessions* and refreshes itself; when it disappears, the 
 - **Time to first token** is measured from request start to the first token; **speed** is output tokens over decode time.
 - **Cost** is computed when each request settles, using the price in effect at that moment, and is marked
   as indicative only. Later price edits affect new requests only.
-- Costs require a price per model. Without one the column stays empty — it never pretends to be zero.
+- Costs need a price, and prices ship with the plugin in `pricing.json` (updated with releases); there is
+  nothing to configure in the UI. A model without a price keeps an empty cost — it never pretends to be zero.
 
 ## Development
 

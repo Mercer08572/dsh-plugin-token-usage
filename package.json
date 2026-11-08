@@ -1,6 +1,6 @@
 {
   "name": "dsh-client-ui-token-usage",
-  "version": "0.3.3",
+  "version": "0.5.2",
   "private": true,
   "description": "Token 用量与成本看板：总量卡片 + 趋势图 + 53 周热力图 + 请求日志，数据存 Host SQLite",
   "type": "module",
