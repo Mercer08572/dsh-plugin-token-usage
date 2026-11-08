@@ -36,6 +36,7 @@ configure and no recording to start — past sessions are backfilled automatical
 | Daily trend | Stacked bars (uncached input, cache read, output) with a request-count line on top; 7 / 30 / 90 days |
 | Heatmap | 53 weeks, five intensity levels by daily token volume; empty days keep their square so gaps are obvious |
 | Request log | Time, model, input, output, cache read, hit rate, speed, time-to-first-token and cost, with model filter and pagination |
+| Model aliases | Map a spelling seen in the logs onto a priced model; the alias can be picked or typed, the target comes from the price list |
 | Follows the UI language | ¥ for Chinese, $ for everything else — nothing to configure |
 | Local storage | One SQLite file; delete it and everything is gone |
 
@@ -56,7 +57,8 @@ The panel is four blocks, top to bottom:
 ```
 
 Just below the header there is a scope row for the cards (7 days / 30 days / all); the trend has its own
-7 / 30 / 90-day switch. The plugin has no settings to configure.
+7 / 30 / 90-day switch. The tag button in the top right opens model aliases. Prices themselves still come
+only from `pricing.json`.
 
 ## Installation
 

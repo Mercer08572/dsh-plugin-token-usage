@@ -242,8 +242,25 @@ const logs = {
 	]
 };
 const models = [{ provider: "opencode-go", model: "deepseek-flash", requests: 5731, tokens: 1449524933, lastTs: now, priced: true }];
-// UsageDock 的 useState 顺序：overview/trend/heat/logs/models/range/trendRange/page/filter/error/revision/loading
-forcedByComponent.set(dock, [overview, trend, heat, logs, models, 7, 30, 1, "", "", 0, false]);
+// UsageDock 的 useState 顺序：
+// overview/trend/heat/logs/models/priced/aliases/aliasOpen/range/trendRange/page/filter/error/revision/loading
+forcedByComponent.set(dock, [
+	overview,
+	trend,
+	heat,
+	logs,
+	models,
+	["deepseek-flash", "gpt-5.6-sol"],
+	[{ alias: "deepseek-v4.9-flash", canonical: "deepseek-flash" }],
+	true,
+	7,
+	30,
+	1,
+	"",
+	"",
+	0,
+	false
+]);
 rendered = 0;
 renderNode(react.createElement(dock, { t: trEn }), 0);
 

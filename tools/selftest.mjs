@@ -218,6 +218,15 @@ check(unpricedRow?.cost === null, "未定价模型的成本必须为 null");
 const variantRow = rows.find((row) => row.model === "DeepSeek/DeepSeek-Flash");
 check(variantRow !== undefined && Math.abs(variantRow.cost - 1000 * 2 / 1e6) < 1e-9, `vendor 前缀 + 大小写变体应命中同一条价格：${variantRow?.cost}`);
 
+// 模型别名：日志里的写法 → 已定价的模型，只影响之后的请求。
+await call("aliasSave", { alias: "deepseek-v4.9-flash", canonical: "deepseek-flash" });
+emit("session-test", { type: "step/start", seq: 30, time: stepStart, data: { turn: 9, step: 1 } });
+emit("session-test", messageEvent({ seq: 31, stepStart, provider: "vendor-y", model: "deepseek-v4.9-flash", input: 1000, cacheRead: 0, output: 0, ttft: 120, decode: 100 }));
+
+const aliased = (await call("logs", { pageSize: 20 })).rows.find((row) => row.model === "deepseek-v4.9-flash");
+check(aliased !== undefined && Math.abs(aliased.cost - 1000 * 2 / 1e6) < 1e-9, `别名应命中目标模型的价格：${aliased?.cost}`);
+check(!(await call("overview", { days: 0 })).unpriced.some((group) => group.model === "deepseek-v4.9-flash"), "别名生效后不该再算未定价");
+
 // 长上下文档位：价格来自 pricing.json（gpt-5.6-sol，>272K 整单 2×/1.5×）。
 const tierBase = Date.parse("2026-11-05T11:00:00+08:00");
 emit("session-test", { type: "step/start", seq: 20, time: tierBase, data: { turn: 8, step: 1 } });
