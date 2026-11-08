@@ -242,74 +242,17 @@ const logs = {
 	]
 };
 const models = [{ provider: "opencode-go", model: "deepseek-flash", requests: 5731, tokens: 1449524933, lastTs: now, priced: true }];
-const pricing = [
-	{
-		provider: "opencode-go",
-		model: "deepseek-flash",
-		currency: "CNY",
-		unit: "per_1m",
-		prices: { input: 2, cacheRead: 0.04, cacheWrite: 0, output: 8 },
-		offPeakPrices: null,
-		peakValley: { enabled: true, windows: [{ start: 540, end: 720, crosses: false }], windowsMean: "peak", discount: 0.5, weekend: "valley", holiday: "valley" }
-	}
-];
-const calendar = overview.calendar;
-const groups = [
-	{ model: "deepseek-flash", requests: 5731, tokens: 1449524933, priced: true, variants: [{ provider: "opencode-go", model: "deepseek-flash", requests: 5731, tokens: 1449524933 }] },
-	{
-		model: "deepseek-v4.1-flash-fast",
-		requests: 2715,
-		tokens: 560879306,
-		priced: false,
-		variants: [
-			{ provider: "commandcode", model: "deepseek/deepseek-v4.1-flash-fast", requests: 2268, tokens: 478585277 },
-			{ provider: "commandcode-bad", model: "deepseek/deepseek-v4.1-flash-fast", requests: 447, tokens: 82294029 }
-		]
-	}
-];
-const aliases = [{ alias: "deepseek-v4-flash", canonical: "deepseek-flash" }];
-
-// UsageDock 的 useState 顺序：overview/trend/heat/logs/models/pricing/groups/aliases/calendar/range/page/filter/error/settingsOpen/revision/loading
-forcedByComponent.set(dock, [overview, trend, heat, logs, models, pricing, groups, aliases, calendar, 30, 1, "", "", true, 0, false]);
+// UsageDock 的 useState 顺序：overview/trend/heat/logs/models/range/trendRange/page/filter/error/revision/loading
+forcedByComponent.set(dock, [overview, trend, heat, logs, models, 7, 30, 1, "", "", 0, false]);
 rendered = 0;
 renderNode(react.createElement(dock, { t: trEn }), 0);
 
 const dataPass = rendered;
 
-// ── 第三遍：设置抽屉里的两个弹窗（价格 / 别名）单独渲染一次 ──────────────
-const settings = byName.get("SettingsSheet");
-if (settings === undefined) throw new Error("没有渲染到 SettingsSheet");
-const settingsProps = {
-	tr: trEn,
-	fx: overview.fx,
-	pricing,
-	groups,
-	aliases,
-	calendar,
-	onClose: () => {},
-	onRefreshFx: () => {},
-	onRefreshCalendar: () => {},
-	onOverride: () => {},
-	onSaveAlias: () => {},
-	onRemoveAlias: () => {},
-	onSavePricing: () => {},
-	onRemovePricing: () => {}
-};
-
-let dialogRendered = 0;
-for (const dialog of ["pricing", "aliases", "calendar"]) {
-	// SettingsSheet 的 useState 顺序：dialog / note
-	forcedByComponent.set(settings, [dialog, ""]);
-	rendered = 0;
-	renderNode(react.createElement(settings, settingsProps), 0);
-	dialogRendered += rendered;
-}
-
 if (emptyPass < 8) throw new Error("空数据下只渲染了 " + emptyPass + " 个组件，面板内容可能没展开");
 if (dataPass < 12) throw new Error("有数据下只渲染了 " + dataPass + " 个组件，列表/设置可能没渲染");
-if (dialogRendered < 12) throw new Error("设置弹窗只渲染了 " + dialogRendered + " 个组件，价格/别名弹窗可能没打开");
 
 const leaked = [...new Set(texts)].filter((text) => /^[a-z][a-zA-Z]*\.[a-zA-Z]/.test(text));
 if (leaked.length > 0) throw new Error("界面上出现了未翻译的 key：" + leaked.join(", "));
 
-console.log("render-smoke ok：空数据 " + emptyPass + " 个组件，有数据 " + dataPass + " 个组件，三个设置弹窗 " + dialogRendered + " 个组件，无异常。");
+console.log("render-smoke ok：空数据 " + emptyPass + " 个组件，有数据 " + dataPass + " 个组件，无异常。");

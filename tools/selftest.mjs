@@ -218,43 +218,41 @@ check(unpricedRow?.cost === null, "未定价模型的成本必须为 null");
 const variantRow = rows.find((row) => row.model === "DeepSeek/DeepSeek-Flash");
 check(variantRow !== undefined && Math.abs(variantRow.cost - 1000 * 2 / 1e6) < 1e-9, `vendor 前缀 + 大小写变体应命中同一条价格：${variantRow?.cost}`);
 
-// 改价后：历史不动，新请求按新价。
-await call("pricingSave", {
-	entries: [{ provider: "*", model: "deepseek-flash", currency: "CNY", unit: "per_1m", prices: { input: 4, cacheRead: 0.08, cacheWrite: 0, output: 16 } }]
-});
-const stepStart2 = Date.parse("2026-11-05T10:00:00+08:00");
-emit("session-test", { type: "step/start", seq: 14, time: stepStart2, data: { turn: 6, step: 6 } });
-emit("session-test", messageEvent({ seq: 15, stepStart: stepStart2, provider: "opencode-go", model: "deepseek-flash", input: 1000, cacheRead: 0, output: 0, ttft: 150, decode: 100 }));
-// 别名：把另一个写法映射到已定价的规范名。
-await call("aliasSave", { alias: "deepseek-v4.9-flash", canonical: "deepseek-flash" });
-const aliasStart = Date.parse("2026-11-05T10:30:00+08:00");
-emit("session-test", { type: "step/start", seq: 16, time: aliasStart, data: { turn: 7, step: 7 } });
-emit("session-test", messageEvent({ seq: 17, stepStart: aliasStart, provider: "vendor-y", model: "deepseek-v4.9-flash", input: 1000, cacheRead: 0, output: 0, ttft: 120, decode: 100 }));
+// 长上下文档位：价格来自 pricing.json（gpt-5.6-sol，>272K 整单 2×/1.5×）。
+const tierBase = Date.parse("2026-11-05T11:00:00+08:00");
+emit("session-test", { type: "step/start", seq: 20, time: tierBase, data: { turn: 8, step: 1 } });
+emit("session-test", messageEvent({ seq: 21, stepStart: tierBase, provider: "vendor-z", model: "gpt-5.6-sol", input: 1000, cacheRead: 0, output: 100, ttft: 300, decode: 100 }));
+emit("session-test", { type: "step/start", seq: 22, time: tierBase + 60000, data: { turn: 8, step: 2 } });
+emit("session-test", messageEvent({ seq: 23, stepStart: tierBase + 60000, provider: "vendor-z", model: "gpt-5.6-sol", input: 300000, cacheRead: 0, output: 100, ttft: 310, decode: 100 }));
 
-const afterPrice = await call("logs", { pageSize: 20 });
-const newest = afterPrice.rows.find((row) => row.ttft === 150);
-check(newest !== undefined && Math.abs(newest.cost - 1000 * 4 / 1e6) < 1e-9, `改价后的新请求应按新价：${newest?.cost}`);
-const aliased = afterPrice.rows.find((row) => row.ttft === 120);
-check(aliased !== undefined && Math.abs(aliased.cost - 1000 * 4 / 1e6) < 1e-9, `别名应命中规范名的新价格：${aliased?.cost}`);
-const history = afterPrice.rows.find((row) => row.ttft === 600);
-check(history !== undefined && Math.abs(history.cost - 0.00316) < 1e-9, "历史成本不应被改价影响");
+const tiered = (await call("logs", { pageSize: 20 })).rows.filter((row) => row.model === "gpt-5.6-sol");
+const below = tiered.find((row) => row.input === 1000);
+const above = tiered.find((row) => row.input === 300000);
+check(below !== undefined && Math.abs(below.cost - (1000 * 4 + 100 * 20) / 1e6) < 1e-9, `阈值下应按基础价：${below?.cost}`);
+check(above !== undefined && Math.abs(above.cost - (300000 * 8 + 100 * 30) / 1e6) < 1e-9, `超过阈值应整单按分档价：${above?.cost}`);
 
 const trend = await call("trend", { days: 7 });
 check(trend.days.length === 7, "趋势应为 7 天");
 check(trend.days.some((day) => day.requests >= 3), "趋势里应有请求");
 
+const allTrend = await call("trend", { days: 0 });
+check(allTrend.days.some((day) => day.day === "2026-11-05"), `“全部”应覆盖到最早一天，实际 ${allTrend.days.length} 天`);
+
 const heat = await call("heatmap", { weeks: 53 });
 check(heat.days.length >= 2, "热力图应有数据");
 
+// 范围切换：7 天的请求数应少于全部。
+const week = await call("overview", { days: 7 });
+const all = await call("overview", { days: 0 });
+check(all.totals.requests >= week.totals.requests, "全部范围的请求数不应少于 7 天");
+
 // 币种由调用方决定：中文 ¥、英文 $，两者按同一汇率折算。
-const cnyView = await call("overview", { currency: "CNY" });
-const usdView = await call("overview", { currency: "USD" });
+const cnyView = await call("overview", { currency: "CNY", days: 0 });
+const usdView = await call("overview", { currency: "USD", days: 0 });
 check(usdView.currency === "USD", "传入 USD 时 overview.currency 应为 USD");
 check(cnyView.currency === "CNY", "传入 CNY 时 overview.currency 应为 CNY");
 check(Math.abs(usdView.totals.cost - cnyView.totals.cost / usdView.fx.rate) < 1e-6, `USD 折算不对：${usdView.totals.cost} vs ${cnyView.totals.cost}`);
 
-const settings = await call("settingsGet");
-check(settings.displayCurrency === "CNY", "默认币种应为 CNY");
 
 if (failures.length > 0) {
 	console.error("自检失败：");
@@ -267,5 +265,5 @@ console.log("selftest ok：");
 console.log("  请求 6 条（2 回填 + 4 实时，fork 前缀已去重）/ 失败 1 / 取消 1 / 未定价 1");
 console.log("  峰值成本", peakRow.cost, "谷值成本", weekendRow.cost);
 console.log("  首字", peakRow.ttft, "ms / 速度", peakRow.speed.toFixed(1), "tok/s");
-console.log("  改价后历史成本保持不变");
+console.log("  分档：阈值下", below.cost, "超过阈值", above.cost);
 rmSync(home, { recursive: true, force: true });

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "usdCnyRate": 6.67,
-  "_note": "每次启动会把这里「数据库还没有」的模型补进去，绝不覆盖你已经在面板里改过的价格。想彻底移除某个模型的价格，要同时删掉文件里的条目，否则下次会被补回。单价单位固定为「每百万 tokens」。以 _ 开头的字段是注释，会被忽略。模型 id 先归一化（转小写 + 去掉 vendor 前缀）再匹配，所以 provider 写 \"*\" 就能覆盖所有通道；google/gemini-3.8-flash 与 gemini-3.8-flash 是同一条，不用写两遍。",
+  "_note": "每次启动会把这里「数据库还没有」的模型补进去，绝不覆盖你已经在面板里改过的价格。想彻底移除某个模型的价格，要同时删掉文件里的条目，否则下次会被补回。单价单位固定为「每百万 tokens」。以 _ 开头的字段是注释，会被忽略。模型 id 先归一化（转小写 + 去掉 vendor 前缀）再匹配。tiers 是「长上下文档位」：prompt（未命中输入 + 缓存读 + 缓存写）超过 from 后，本次请求整单按 tier 单价计价，不是只对超出部分加价。DeepSeek/GLM/Gemini 的价格来自厂商公布价；Claude 取自 Anthropic 官方定价页（2026-11），缓存写按 5 分钟档（1.25×）填写；OpenAI 取自其 API 定价页（2026-11），缓存写为 30 分钟档。价格会变，下单前请以官方页面为准。",
   "defaults": {
     "currency": "CNY",
     "unit": "per_1m",
@@ -134,6 +134,133 @@
       "model": "glm-5.3",
       "currency": "CNY",
       "prices": { "input": 8, "cacheRead": 2, "cacheWrite": 0, "output": 28 }
+    },
+    {
+      "_note": "Anthropic 官方价（2026-11）。缓存读按 0.025× 输入。",
+      "provider": "*",
+      "model": "claude-fable-5-1",
+      "currency": "USD",
+      "prices": { "input": 10, "cacheRead": 0.25, "cacheWrite": 12.5, "output": 50 }
+    },
+    {
+      "_note": "缓存读 0.05× 输入；缓存写为 5 分钟档（1.25×）。",
+      "provider": "*",
+      "model": "claude-opus-5-5",
+      "currency": "USD",
+      "prices": { "input": 4, "cacheRead": 0.2, "cacheWrite": 5, "output": 20 }
+    },
+    {
+      "_note": "缓存读 0.05× 输入；缓存写为 5 分钟档（1.25×）。",
+      "provider": "*",
+      "model": "claude-sonnet-5-5",
+      "currency": "USD",
+      "prices": { "input": 2, "cacheRead": 0.1, "cacheWrite": 2.5, "output": 10 }
+    },
+    {
+      "_note": "prompt 超过 100,000 tokens 后整单按高档计价（官方 5×）。",
+      "provider": "*",
+      "model": "claude-haiku-5-5",
+      "currency": "USD",
+      "prices": { "input": 0.1, "cacheRead": 0.01, "cacheWrite": 0.125, "output": 0.5 },
+      "tiers": [
+        { "from": 100000, "prices": { "input": 0.5, "cacheRead": 0.05, "cacheWrite": 0.625, "output": 2.5 } }
+      ]
+    },
+    {
+      "provider": "*",
+      "model": "claude-opus-5",
+      "currency": "USD",
+      "prices": { "input": 5, "cacheRead": 0.5, "cacheWrite": 6.25, "output": 25 }
+    },
+    {
+      "provider": "*",
+      "model": "claude-opus-4-5",
+      "currency": "USD",
+      "prices": { "input": 5, "cacheRead": 0.5, "cacheWrite": 6.25, "output": 25 }
+    },
+    {
+      "provider": "*",
+      "model": "claude-sonnet-5",
+      "currency": "USD",
+      "prices": { "input": 2, "cacheRead": 0.2, "cacheWrite": 2.5, "output": 10 }
+    },
+    {
+      "provider": "*",
+      "model": "claude-sonnet-4-6",
+      "currency": "USD",
+      "prices": { "input": 3, "cacheRead": 0.3, "cacheWrite": 3.75, "output": 15 }
+    },
+    {
+      "provider": "*",
+      "model": "claude-sonnet-4-5",
+      "currency": "USD",
+      "prices": { "input": 3, "cacheRead": 0.3, "cacheWrite": 3.75, "output": 15 }
+    },
+    {
+      "provider": "*",
+      "model": "claude-haiku-4-5",
+      "currency": "USD",
+      "prices": { "input": 1, "cacheRead": 0.1, "cacheWrite": 1.25, "output": 5 }
+    },
+    {
+      "_note": "OpenAI 长上下文档位：>272K 整单 2× 输入/缓存、1.5× 输出。",
+      "provider": "*",
+      "model": "gpt-6-astra",
+      "currency": "USD",
+      "prices": { "input": 10, "cacheRead": 1, "cacheWrite": 12.5, "output": 50 },
+      "tiers": [
+        { "from": 272000, "prices": { "input": 20, "cacheRead": 2, "cacheWrite": 25, "output": 75 } }
+      ]
+    },
+    {
+      "_note": ">272K 整单 2×/1.5×。",
+      "provider": "*",
+      "model": "gpt-5.6-sol",
+      "currency": "USD",
+      "prices": { "input": 4, "cacheRead": 0.4, "cacheWrite": 5, "output": 20 },
+      "tiers": [
+        { "from": 272000, "prices": { "input": 8, "cacheRead": 0.8, "cacheWrite": 10, "output": 30 } }
+      ]
+    },
+    {
+      "_note": ">272K 整单 2×/1.5×。",
+      "provider": "*",
+      "model": "gpt-5.6-terra",
+      "currency": "USD",
+      "prices": { "input": 2, "cacheRead": 0.2, "cacheWrite": 2.5, "output": 12 },
+      "tiers": [
+        { "from": 272000, "prices": { "input": 4, "cacheRead": 0.4, "cacheWrite": 5, "output": 18 } }
+      ]
+    },
+    {
+      "_note": ">272K 整单 2×/1.5×。",
+      "provider": "*",
+      "model": "gpt-5.6-luna",
+      "currency": "USD",
+      "prices": { "input": 0.2, "cacheRead": 0.02, "cacheWrite": 0.25, "output": 1.2 },
+      "tiers": [
+        { "from": 272000, "prices": { "input": 0.4, "cacheRead": 0.04, "cacheWrite": 0.5, "output": 1.8 } }
+      ]
+    },
+    {
+      "_note": "缓存写入免费；>272K 整单 2×/1.5×。",
+      "provider": "*",
+      "model": "gpt-5.5",
+      "currency": "USD",
+      "prices": { "input": 5, "cacheRead": 0.5, "cacheWrite": 0, "output": 30 },
+      "tiers": [
+        { "from": 272000, "prices": { "input": 10, "cacheRead": 1, "cacheWrite": 0, "output": 45 } }
+      ]
+    },
+    {
+      "_note": "缓存写入免费；>272K 整单 2×/1.5×。",
+      "provider": "*",
+      "model": "gpt-5.4",
+      "currency": "USD",
+      "prices": { "input": 2.5, "cacheRead": 0.25, "cacheWrite": 0, "output": 15 },
+      "tiers": [
+        { "from": 272000, "prices": { "input": 5, "cacheRead": 0.5, "cacheWrite": 0, "output": 22.5 } }
+      ]
     }
   ]
 }
