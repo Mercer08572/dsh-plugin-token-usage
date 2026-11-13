@@ -31,7 +31,7 @@ configure and no recording to start — past sessions are backfilled automatical
 
 | Capability | What you get |
 | --- | --- |
-| Summary cards | Total cost, requests, tokens and cache hit rate, each with today's delta; failures and cancellations live in a hover tooltip |
+| Summary cards | Total cost, requests, tokens and cache hit rate, each with today's delta |
 | Scope switch | Cards can show 7 days, 30 days or all time; the trend has its own 7 / 30 / 90-day switch |
 | Daily trend | Stacked bars (uncached input, cache read, output) with a request-count line on top; 7 / 30 / 90 days |
 | Heatmap | 53 weeks, five intensity levels by daily token volume; empty days keep their square so gaps are obvious |

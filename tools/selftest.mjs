@@ -17,39 +17,56 @@ mkdirSync(join(home, ".dsh"), { recursive: true });
 
 const { apply } = await import("../lib/index.js");
 
+/**
+ * 最近一次（严格早于今天）的某个星期几，格式 YYYY-MM-DD。
+ * 测试样本要固定在「工作日高峰」和「周末谷时」，但不能写死日期——否则过几天
+ * 就落不到 7 天窗口里，断言会因为日期漂移而失败。
+ */
+function recentDay(dow) {
+	const now = new Date();
+	const day = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+	const delta = ((day.getDay() - dow + 7) % 7) || 7;
+	day.setDate(day.getDate() - delta);
+	const pad = (value) => String(value).padStart(2, "0");
+	return `${day.getFullYear()}-${pad(day.getMonth() + 1)}-${pad(day.getDate())}`;
+}
+
+const thursday = recentDay(4);
+const saturday = recentDay(6);
+
 const listeners = new Map();
 const routes = new Map();
 let backfillDone = false;
 
 /** 假 sessionQuery：父会话 + 一个 fork 出来的子会话（子会话整段复制了父会话的前缀）。 */
 const parentEvents = [
-	{ type: "step/start", seq: 0, time: Date.parse("2026-11-05T09:30:00+08:00"), data: { turn: 1, step: 1 } },
+	{ type: "step/start", seq: 0, time: Date.parse(thursday + "T09:30:00+08:00"), data: { turn: 1, step: 1 } },
 	{
 		type: "assistant/message",
 		seq: 1,
-		time: Date.parse("2026-11-05T09:30:02+08:00"),
+		time: Date.parse(thursday + "T09:30:02+08:00"),
 		data: {
 			turn: 1,
 			step: 1,
 			message: { role: "assistant", content: [], source: { kind: "model", provider: "opencode-go", model: "deepseek-flash" } },
 			usage: { inputTokens: 100, outputTokens: 10, cacheReadTokens: 0, totalTokens: 110 },
-			stream: [{ type: "text-chunks", time0: Date.parse("2026-11-05T09:30:01+08:00"), index: 0, dt: [1, 1, 1] }]
+			stream: [{ type: "text-chunks", time0: Date.parse(thursday + "T09:30:01+08:00"), index: 0, dt: [1, 1, 1] }]
 		}
 	}
 ];
 const childEvents = [
 	...parentEvents,
-	{ type: "step/start", seq: 2, time: Date.parse("2026-11-07T09:30:00+08:00"), data: { turn: 2, step: 1 } },
+	{ type: "step/start", seq: 2, time: Date.parse(saturday + "T09:30:00+08:00"), data: { turn: 2, step: 1 } },
 	{
 		type: "assistant/message",
 		seq: 3,
-		time: Date.parse("2026-11-07T09:30:02+08:00"),
+		time: Date.parse(saturday + "T09:30:02+08:00"),
 		data: {
 			turn: 2,
 			step: 1,
 			message: { role: "assistant", content: [], source: { kind: "model", provider: "opencode-go", model: "deepseek-flash" } },
 			usage: { inputTokens: 200, outputTokens: 20, cacheReadTokens: 0, totalTokens: 220 },
-			stream: [{ type: "text-chunks", time0: Date.parse("2026-11-07T09:30:01+08:00"), index: 0, dt: [1, 1, 1] }]
+			stream: [{ type: "text-chunks", time0: Date.parse(saturday + "T09:30:01+08:00"), index: 0, dt: [1, 1, 1] }]
 		}
 	}
 ];
@@ -116,16 +133,16 @@ function messageEvent({ seq, stepStart, provider, model, input, cacheRead, outpu
 	};
 }
 
-// 2026-11-05 09:30 北京时间 = 周四高峰段。
-const stepStart = Date.parse("2026-11-05T09:30:00+08:00");
+// 最近的周四 09:30（北京时间）= 高峰段。
+const stepStart = Date.parse(thursday + "T09:30:00+08:00");
 emit("session-test", { type: "step/start", seq: 0, time: stepStart, data: { turn: 1, step: 1 } });
 emit(
 	"session-test",
 	messageEvent({ seq: 1, stepStart, provider: "opencode-go", model: "deepseek-flash", input: 1000, cacheRead: 9000, output: 100, ttft: 600, decode: 1000 })
 );
 
-// 2026-11-07 09:30 北京时间 = 周六，同一时钟区间应判为谷时（半价）。
-const weekendStart = Date.parse("2026-11-07T09:30:00+08:00");
+// 最近的周六 09:30 = 同一时钟区间应判为谷时（半价）。
+const weekendStart = Date.parse(saturday + "T09:30:00+08:00");
 emit("session-test", { type: "step/start", seq: 2, time: weekendStart, data: { turn: 2, step: 2 } });
 emit(
 	"session-test",
@@ -228,7 +245,7 @@ check(aliased !== undefined && Math.abs(aliased.cost - 1000 * 2 / 1e6) < 1e-9, `
 check(!(await call("overview", { days: 0 })).unpriced.some((group) => group.model === "deepseek-v4.9-flash"), "别名生效后不该再算未定价");
 
 // 长上下文档位：价格来自 pricing.json（gpt-5.6-sol，>272K 整单 2×/1.5×）。
-const tierBase = Date.parse("2026-11-05T11:00:00+08:00");
+const tierBase = Date.parse(thursday + "T11:00:00+08:00");
 emit("session-test", { type: "step/start", seq: 20, time: tierBase, data: { turn: 8, step: 1 } });
 emit("session-test", messageEvent({ seq: 21, stepStart: tierBase, provider: "vendor-z", model: "gpt-5.6-sol", input: 1000, cacheRead: 0, output: 100, ttft: 300, decode: 100 }));
 emit("session-test", { type: "step/start", seq: 22, time: tierBase + 60000, data: { turn: 8, step: 2 } });
@@ -245,7 +262,7 @@ check(trend.days.length === 7, "趋势应为 7 天");
 check(trend.days.some((day) => day.requests >= 3), "趋势里应有请求");
 
 const allTrend = await call("trend", { days: 0 });
-check(allTrend.days.some((day) => day.day === "2026-11-05"), `“全部”应覆盖到最早一天，实际 ${allTrend.days.length} 天`);
+check(allTrend.days.some((day) => day.day === thursday), `“全部”应覆盖到最早一天，实际 ${allTrend.days.length} 天`);
 
 const heat = await call("heatmap", { weeks: 53 });
 check(heat.days.length >= 2, "热力图应有数据");
@@ -271,7 +288,7 @@ if (failures.length > 0) {
 }
 
 console.log("selftest ok：");
-console.log("  请求 6 条（2 回填 + 4 实时，fork 前缀已去重）/ 失败 1 / 取消 1 / 未定价 1");
+console.log("  首轮 6 条（2 回填 + 4 实时，fork 前缀已去重）/ 失败 1 / 取消 1 / 未定价 1");
 console.log("  峰值成本", peakRow.cost, "谷值成本", weekendRow.cost);
 console.log("  首字", peakRow.ttft, "ms / 速度", peakRow.speed.toFixed(1), "tok/s");
 console.log("  分档：阈值下", below.cost, "超过阈值", above.cost);
